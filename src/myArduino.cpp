@@ -1,13 +1,4 @@
-//Manav Dudhia
-//This file serves to define functions that would typically be available in the Arduino library
-
-#ifndef HELPERS_H
-#define HELPERS_H
-
-#include <Arduino.h>
-
-#define RDA 0x80
-#define TBE 0x20  
+#include "myArduino.h"
 
 void adcInit() {
     // setup the A register
@@ -47,7 +38,7 @@ unsigned int adc_read(unsigned char adc_channel_num) {
     return ADC;
 }
 
-void U0init(int U0baud) {
+void U0Init(int U0baud) {
     unsigned long FCPU = 16000000;
     unsigned int tbaud;
     tbaud = (FCPU / 16 / U0baud - 1);
@@ -90,4 +81,26 @@ void U0printFloat(float f) {
     U0printString(temp); 
 }
 
-#endif
+void my_delay(unsigned int freq) {
+    // calc period
+    double period = 1.0/double(freq);
+    // 50% duty cycle
+    double half_period = period/ 2.0f;
+    // clock period def
+    double clk_period = 0.0000000625;
+    // calc ticks 
+    unsigned int ticks = half_period / clk_period;
+    // stop the timer
+    TCCR1B &= 0xF8;
+    // set the counts
+    TCNT1 = (unsigned int) (65536 - ticks);
+    // start the timer
+    TCCR1A = 0x0;
+    TCCR1B |= 0b00000001;
+    // wait for overflow
+    while((TIFR1 & 0x01)==0); // 0b 0000 0000
+    // stop the timer
+    TCCR1B &= 0xF8;   // 0b 0000 0000
+    // reset TOV           
+    TIFR1 |= 0x01;
+}
